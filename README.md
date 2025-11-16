@@ -1,0 +1,2 @@
+# Github_Actions_Practice
+Github Actionsの練習用リポジトリ
