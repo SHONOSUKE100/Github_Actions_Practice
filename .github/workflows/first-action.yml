@@ -1,12 +1,14 @@
 name: First Workflow
-on: workflow_dispatch
-jobs: 
-  first-job:
+on: push
+jobs:
+  test:
     runs-on: ubuntu-latest
-    steps: 
-      - name: Print greeting
-        run: |
-          echo "Hello World!!"
-          echo "How are you??"
-      - name: Print goodbye
-        run: echo "Done - bye!!"
+    steps:
+      - name: Get code
+        uses: actions/checkout@v5
+      - name: setup python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Run unit tests
+        run: python -m unittest discover -s tests
