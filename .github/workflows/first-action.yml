@@ -10,13 +10,13 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install fastapi uvicorn
+        run: uv sync --locked
       - name: Run unit tests
-        run: python -m unittest discover -s tests
+        run: uv run python -m unittest discover -s tests
 
   deploy:
     needs: test
@@ -27,15 +27,16 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
       - name: Install dependencies
+        run: uv sync --locked
+      - name: Smoke test FastAPI deployment
         run: |
-          python -m pip install --upgrade pip
-          pip install fastapi uvicorn
-      - name: Deploy FastAPI locally for smoke test
-        run: |
-          uvicorn main:app --host 0.0.0.0 --port 8000 &
+          uv run uvicorn main:app --host 0.0.0.0 --port 8000 &
           SERVER_PID=$!
+          trap "kill $SERVER_PID" EXIT
           echo "Started FastAPI (PID: $SERVER_PID)"
           for i in {1..10}; do
             if curl -sSf http://127.0.0.1:8000/health > /dev/null; then
@@ -48,5 +49,4 @@ jobs:
           curl -sSf -X POST http://127.0.0.1:8000/average \
             -H 'Content-Type: application/json' \
             -d '{"values":[1,2,3,4]}'
-          kill $SERVER_PID
-          echo "FastAPI process stopped"
+          echo "FastAPI smoke test succeeded"
